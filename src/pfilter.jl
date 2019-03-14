@@ -9,7 +9,7 @@ mutable struct ParticleGroup
     weights;
 end
 
-mutable struct NoiseDists
+struct NoiseDists
     actual;
     estimated;
     perturb;
