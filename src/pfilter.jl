@@ -1,7 +1,6 @@
-using Plots
-using LinearAlgebra
-using DelimitedFiles
-using Compat, Random, Distributions, StatsBase
+using Plots, DelimitedFiles
+using ProgressMeter
+using Random, Distributions, StatsBase
 Random.seed!(21);
 
 mutable struct ParticleGroup
@@ -81,7 +80,7 @@ function run_filter(x0, x1, xtrue, Np, Nt, dt, velocity, σ_true, σ_est, σ_per
     particles = init_particles(x0, x1, Np);
     xtrue_history, x_history = init_histories(Nt, Np);
     noise = NoiseDists(map((σ) -> Normal(0, σ), [σ_true, σ_est, σ_pert])...);
-    for t = 1 : Nt
+    @showprogress 1 "Running pfilter..." for t = 1 : Nt
         forward!(particles, xtrue, noise, dt, velocity);
         xtrue += dt * velocity;
         xtrue_history[t] = xtrue;
@@ -103,12 +102,14 @@ function make_mountain(x0, x1)
 end
 
 function make_animation(x, y, x0, y0, x1, y1, x_history, xtrue_history, aeroplane, Nt)
+    p = Progress(Nt, 1, "Generating animation...")
     anim = @animate for t = 1 : Nt
         xest_t = x_history[t, :];
         yest_t = elevAboveSeaLevel.(xest_t);
         plot(x, y, xlims=(x0, x1), ylims=(y0, y1), legend=false);
         scatter!(xest_t, yest_t, markersize=1, color="darkblue");
         scatter!([xtrue_history[t] - 50], [y1 - 50], shape=aeroplane, ms=20);
+        next!(p)
     end
     return anim;
 end
